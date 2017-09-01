@@ -23,9 +23,9 @@ class Raytracer {
         pixelMap = new ConcurrentHashMap<>();
         sphereMap = new ConcurrentHashMap<>();
 
-        sphereMap.put(new Sphere(100, new Point3d(0, 0, 400)), Color.GREEN);
-        sphereMap.put(new Sphere(500, new Point3d(100, 100, 1000)), Color.BLUE);
-        sphereMap.put(new Sphere(50, new Point3d(-300, -300, 400)), Color.RED);
+        sphereMap.put(new Sphere(100, new Point3d(0, 0, 1600)), Color.GREEN);
+        sphereMap.put(new Sphere(500, new Point3d(100, 100, 4000)), Color.BLUE);
+        sphereMap.put(new Sphere(50, new Point3d(-300, -300, 1600)), Color.RED);
     }
     
     void drawOnImage(BufferedImage image) {
@@ -55,22 +55,50 @@ class Raytracer {
     void calculatePixel(int x, int y) {
         Color c = Color.BLACK;
 
+        Vector3d lightDirection = new Vector3d(0, -1,  0);
+        double ambient = 0.25;
+
         double bestIntersect = Double.MAX_VALUE;
+        double alignmentToLight = 0;
         for (Map.Entry<Sphere, Color> entry : sphereMap.entrySet()) {
-            double intersectDistance = entry.getKey().rayIntersect(getRayAtPixel(x, y));
+            Vector3d ray = getRayAtPixel(x, y);
+            double intersectDistance = entry.getKey().rayIntersect(ray);
             if (intersectDistance < 0) continue;
             if (intersectDistance < bestIntersect) {
                 bestIntersect = intersectDistance;
                 c = entry.getValue();
+
+                Vector3d intersectPoint = new Vector3d();
+                intersectPoint.scale(bestIntersect, ray);
+                Vector3d normal = entry.getKey().normalAtPoint(intersectPoint);
+                alignmentToLight = normal.dot(lightDirection);
+
+                System.out.println(intersectPoint.toString() + " "  + normal.toString());
             }
         }
+        alignmentToLight = Math.max(alignmentToLight, 0); //Can't have negative light
 
-        pixelMap.put(new Point(x, y), c);
+        alignmentToLight += ambient;
+        alignmentToLight = Math.min(alignmentToLight, 1);
+
+        Color l = new Color((int)(c.getRed() * alignmentToLight), (int) (c.getGreen() * alignmentToLight), (int) (c.getBlue() * alignmentToLight));
+
+        if (bestIntersect < 100000)
+            System.out.println(alignmentToLight + " " + c.toString() + " " + l.toString());
+
+        pixelMap.put(new Point(x, y), l);
     }
 
     Vector3d getRayAtPixel(int x, int y) {
-        Vector3d ray = new Vector3d(x - xSize/2, y - ySize/2, focalLength);
+        double fov = Math.toRadians(45);
+
+        double px = ((double)x - xSize/2 + 0.5) * 2 * Math.atan(fov/2) / xSize;
+        double py = ((double)y - ySize/2 + 0.5) * 2 * Math.atan(fov/2) / ySize;
+
+        //System.out.println(px + " " + py);
+        Vector3d ray = new Vector3d(px, py, 1);
         ray.normalize();
+
         return ray;
     }
 }

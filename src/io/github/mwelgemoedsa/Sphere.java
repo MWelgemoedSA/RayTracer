@@ -4,7 +4,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import java.util.Vector;
 
-public class Sphere {
+public class Sphere implements SceneObject {
     private double radius;
     private Point3d center;
 
@@ -27,5 +27,12 @@ public class Sphere {
 
         if (d1 > d2) return d2;
         return d1;
+    }
+
+    public Vector3d normalAtPoint(Vector3d point) {
+        Vector3d normal = new Vector3d();
+        normal.sub(point, center);
+        normal.normalize();
+        return normal;
     }
 }
