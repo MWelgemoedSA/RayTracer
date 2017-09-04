@@ -17,7 +17,7 @@ class Raytracer {
 
     ConcurrentHashMap<Point, Color> pixelMap;
 
-    ConcurrentHashMap<Sphere, Color> sphereMap;
+    ConcurrentHashMap<SceneObject, Color> sphereMap;
     
     Raytracer() {
         pixelMap = new ConcurrentHashMap<>();
@@ -26,6 +26,13 @@ class Raytracer {
         sphereMap.put(new Sphere(100, new Point3d(0, 0, 1600)), Color.GREEN);
         sphereMap.put(new Sphere(500, new Point3d(100, 100, 4000)), Color.BLUE);
         sphereMap.put(new Sphere(50, new Point3d(-300, -300, 1600)), Color.RED);
+
+        sphereMap.put(
+                new Triangle(
+                        new Vector3d(-500, -100, 2000),
+                        new Vector3d(-400, -100, 2000),
+                        new Vector3d(-450, 100, 2100)
+                        ), Color.MAGENTA);
     }
     
     void drawOnImage(BufferedImage image) {
@@ -35,7 +42,7 @@ class Raytracer {
 
         pixelMap.forEach((point2D, color) -> image.setRGB((int)point2D.getX(), (int)point2D.getY(), color.getRGB()));
 
-        drawGridLines(g2d);
+        //drawGridLines(g2d);
     }
 
     private void drawGridLines(Graphics2D g2d) {
@@ -56,11 +63,11 @@ class Raytracer {
         Color c = Color.BLACK;
 
         Vector3d lightDirection = new Vector3d(0, -1,  0);
-        double ambient = 0.25;
+        double ambient = 0.2;
 
         double bestIntersect = Double.MAX_VALUE;
         double alignmentToLight = 0;
-        for (Map.Entry<Sphere, Color> entry : sphereMap.entrySet()) {
+        for (Map.Entry<SceneObject, Color> entry : sphereMap.entrySet()) {
             Vector3d ray = getRayAtPixel(x, y);
             double intersectDistance = entry.getKey().rayIntersect(ray);
             if (intersectDistance < 0) continue;
