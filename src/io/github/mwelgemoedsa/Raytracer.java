@@ -3,6 +3,10 @@ package io.github.mwelgemoedsa;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -17,17 +21,17 @@ class Raytracer {
 
     ConcurrentHashMap<Point, Color> pixelMap;
 
-    ConcurrentHashMap<SceneObject, Color> sphereMap;
+    ConcurrentHashMap<SceneObject, Color> objectMap;
     
     Raytracer() {
         pixelMap = new ConcurrentHashMap<>();
-        sphereMap = new ConcurrentHashMap<>();
+        objectMap = new ConcurrentHashMap<>();
 
-        sphereMap.put(new Sphere(100, new Point3d(0, 0, 1600)), Color.GREEN);
-        sphereMap.put(new Sphere(500, new Point3d(100, 100, 4000)), Color.BLUE);
-        sphereMap.put(new Sphere(50, new Point3d(-300, -300, 1600)), Color.RED);
+        objectMap.put(new Sphere(100, new Point3d(0, 0, 1600)), Color.GREEN);
+        objectMap.put(new Sphere(500, new Point3d(100, 100, 4000)), Color.BLUE);
+        objectMap.put(new Sphere(50, new Point3d(-300, -300, 1600)), Color.RED);
 
-        sphereMap.put(
+        objectMap.put(
                 new Triangle(
                         new Vector3d(-500, -100, 2000),
                         new Vector3d(-400, -100, 2000),
@@ -62,12 +66,13 @@ class Raytracer {
     void calculatePixel(int x, int y) {
         Color c = Color.BLACK;
 
-        Vector3d lightDirection = new Vector3d(0, -1,  0);
+        Vector3d lightDirection = new Vector3d(-1, -2,  0);
+        lightDirection.normalize();
         double ambient = 0.2;
 
         double bestIntersect = Double.MAX_VALUE;
         double alignmentToLight = 0;
-        for (Map.Entry<SceneObject, Color> entry : sphereMap.entrySet()) {
+        for (Map.Entry<SceneObject, Color> entry : objectMap.entrySet()) {
             Vector3d ray = getRayAtPixel(x, y);
             double intersectDistance = entry.getKey().rayIntersect(ray);
             if (intersectDistance < 0) continue;
@@ -80,7 +85,6 @@ class Raytracer {
                 Vector3d normal = entry.getKey().normalAtPoint(intersectPoint);
                 alignmentToLight = normal.dot(lightDirection);
 
-                System.out.println(intersectPoint.toString() + " "  + normal.toString());
             }
         }
         alignmentToLight = Math.max(alignmentToLight, 0); //Can't have negative light
@@ -89,9 +93,6 @@ class Raytracer {
         alignmentToLight = Math.min(alignmentToLight, 1);
 
         Color l = new Color((int)(c.getRed() * alignmentToLight), (int) (c.getGreen() * alignmentToLight), (int) (c.getBlue() * alignmentToLight));
-
-        if (bestIntersect < 100000)
-            System.out.println(alignmentToLight + " " + c.toString() + " " + l.toString());
 
         pixelMap.put(new Point(x, y), l);
     }
@@ -102,10 +103,42 @@ class Raytracer {
         double px = ((double)x - xSize/2 + 0.5) * 2 * Math.atan(fov/2) / xSize;
         double py = ((double)y - ySize/2 + 0.5) * 2 * Math.atan(fov/2) / ySize;
 
-        //System.out.println(px + " " + py);
         Vector3d ray = new Vector3d(px, py, 1);
         ray.normalize();
 
         return ray;
+    }
+
+    void loadFile(String filePath) {
+        try {
+            try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+                String line;
+                ArrayList<Vector3d> vertices = new ArrayList<>();
+
+                while ((line = br.readLine()) != null) {
+                    System.out.println(line);
+                    String[] parts = line.split(" +");
+                    assert(parts.length == 4);
+
+                    if (parts[0].equals("v")) {
+                        vertices.add(new Vector3d(
+                                Double.parseDouble(parts[1]),
+                                Double.parseDouble(parts[2]),
+                                Double.parseDouble(parts[3]) + 300
+                        ));
+                    } else if (parts[0].equals("f")) {
+                        Triangle triangle = new Triangle(
+                                vertices.get(Integer.parseInt(parts[2])-1),
+                                vertices.get(Integer.parseInt(parts[1])-1),
+                                vertices.get(Integer.parseInt(parts[3])-1)
+                        );
+                        objectMap.put(triangle, Color.white);
+                        System.out.println("New object " + triangle.toString());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

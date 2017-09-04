@@ -37,6 +37,7 @@ public class Main extends  JFrame {
 
     private Main() {
         raytracer = new Raytracer();
+        raytracer.loadFile("Diamond.obj");
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 

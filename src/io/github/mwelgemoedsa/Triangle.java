@@ -33,6 +33,15 @@ public class Triangle implements SceneObject {
         distanceFromOrigin = p1.dot(normal); //Distance of the plane from the origin
     }
 
+    @Override
+    public String toString() {
+        return "Triangle{" +
+                "pointList=" + pointList +
+                ", normal=" + normal +
+                ", distanceFromOrigin=" + distanceFromOrigin +
+                '}';
+    }
+
     public double rayIntersect(Vector3d ray) {
         Vector3d orig = new Vector3d(0, 0, 0);
 
