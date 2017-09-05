@@ -1,16 +1,13 @@
 package io.github.mwelgemoedsa;
 
 import java.awt.*;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -95,14 +92,14 @@ class Raytracer {
         boolean litInternally = false;
 
         for (Map.Entry<SceneObject, Color> entry : objectMap.entrySet()) {
-            Vector3d ray = getRayAtPixel(x, y);
+            Ray ray = getRayAtPixel(x, y);
             double intersectDistance = entry.getKey().rayIntersect(ray);
             if (intersectDistance < 0) continue;
             if (intersectDistance < bestIntersect) {
                 bestIntersect = intersectDistance;
                 c = entry.getValue();
 
-                intersectPoint.scale(bestIntersect, ray);
+                intersectPoint.scale(bestIntersect, ray.getDirection());
                 normal = entry.getKey().normalAtPoint(intersectPoint);
                 litInternally = entry.getKey().isLitInternally();
             }
@@ -129,7 +126,7 @@ class Raytracer {
         pixelMap.put(new Point(x, y), l);
     }
 
-    private Vector3d getRayAtPixel(int x, int y) {
+    private Ray getRayAtPixel(int x, int y) {
         double fov = Math.toRadians(45);
 
         double px = ((double)x - xSize/2 + 0.5) * 2 * Math.atan(fov/2) / xSize;
@@ -138,7 +135,7 @@ class Raytracer {
         Vector3d ray = new Vector3d(px, py, 1);
         ray.normalize();
 
-        return ray;
+        return new Ray(new Vector3d(0, 0, 0), ray);
     }
 
     void loadFile(String filePath) {

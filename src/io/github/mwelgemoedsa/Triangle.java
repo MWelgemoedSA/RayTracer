@@ -42,19 +42,17 @@ public class Triangle implements SceneObject {
                 '}';
     }
 
-    public double rayIntersect(Vector3d ray) {
-        Vector3d orig = new Vector3d(0, 0, 0);
-
-        double alignmentToRay = normal.dot(ray);
+    public double rayIntersect(Ray ray) {
+        double alignmentToRay = normal.dot(ray.getDirection());
         if (alignmentToRay == 0) return -1; //Parallel, triangles are infinitely thin, so no collision
 
-        double intersectDist = (normal.dot(orig) + distanceFromOrigin) / alignmentToRay;
+        double intersectDist = (normal.dot(ray.getOrigin()) + distanceFromOrigin) / alignmentToRay;
 
         if (intersectDist < 0) return intersectDist;
 
         Vector3d intersectPoint = new Vector3d();
-        intersectPoint.scale(intersectDist, ray);
-        intersectPoint.add(orig);
+        intersectPoint.scale(intersectDist, ray.getDirection());
+        intersectPoint.add(ray.getOrigin());
 
         //Test that the point is inside the triangle
         for (int i = 0; i < 3; i++) {

@@ -16,15 +16,14 @@ public class Sphere implements SceneObject {
         this.litInternally = false;
     }
 
-    public double rayIntersect(Vector3d l) { //Returns -1 for no intersection
-        Vector3d origin = new Vector3d(0, 0, 0);
+    public double rayIntersect(Ray ray) { //Returns -1 for no intersection
         Vector3d fromSphereCenter = new Vector3d();
-        fromSphereCenter.sub(origin, center);
+        fromSphereCenter.sub(ray.getOrigin(), center);
 
-        double discriminant = Math.pow(l.dot(fromSphereCenter), 2) - fromSphereCenter.lengthSquared() + Math.pow(radius, 2);
+        double discriminant = Math.pow(ray.getDirection().dot(fromSphereCenter), 2) - fromSphereCenter.lengthSquared() + Math.pow(radius, 2);
         if (discriminant < 0) return -1;
 
-        double k = -(l.dot(fromSphereCenter));
+        double k = -(ray.getDirection().dot(fromSphereCenter));
         double d1 = k + Math.sqrt(discriminant);
         double d2 = k - Math.sqrt(discriminant);
 
