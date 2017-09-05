@@ -37,7 +37,7 @@ class Raytracer {
 
         lightList.add(new Light(new Vector3d(0, 0, zPlane), 1));
 
-        int sphereSize = 50;
+        int sphereSize = 20;
         objectMap.put(new Sphere(sphereSize, new Point3d(0, distBetween, zPlane)), Color.RED);
         objectMap.put(new Sphere(sphereSize, new Point3d(0, -distBetween, zPlane)), Color.RED);
         objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, 0, zPlane)), Color.RED);
@@ -84,7 +84,7 @@ class Raytracer {
     void calculatePixel(int x, int y) {
         Color c = Color.BLACK;
 
-        double ambient = 0.1;
+        double ambient = 0.3;
 
         double bestIntersect = Double.MAX_VALUE;
         Vector3d intersectPoint = new Vector3d();
@@ -111,9 +111,25 @@ class Raytracer {
         } else {
             if (normal != null) {
                 for (Light light : lightList) {
-                    double alignmentToLight = normal.dot(light.getRayTo(intersectPoint));
+                    Vector3d lightDir = light.getVectorFrom(intersectPoint);
+                    bestIntersect = lightDir.length();
+                    lightDir.normalize();
+                    double alignmentToLight = normal.dot(lightDir);
 
-                    alignmentToLight *= -1;
+                    //Check to see that the light is visible to us
+                    for (Map.Entry<SceneObject, Color> entry : objectMap.entrySet()) {
+                        if (entry.getKey().isLitInternally()) continue;
+
+                        Ray ray = new Ray(intersectPoint, lightDir);
+
+                        double intersectDistance = entry.getKey().rayIntersect(ray);
+                        if (intersectDistance < 0) continue;
+                        if (intersectDistance < bestIntersect) {
+                            alignmentToLight = 0;
+                            break;
+                        }
+                    }
+
                     totalLight += Math.max(alignmentToLight, 0); //Can't have negative light;
                 }
             }

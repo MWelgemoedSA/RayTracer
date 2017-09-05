@@ -11,11 +11,10 @@ public class Light {
         this.brightness = brightness;
     }
 
-    Vector3d getRayTo(Vector3d point) {
+    Vector3d getVectorFrom(Vector3d point) {
         Vector3d ray = new Vector3d();
-        ray.sub(point, center);
-        ray.normalize();
-        return ray;
+        ray.sub(center, point);
+         return ray;
     }
 
     public double getBrightness() {
