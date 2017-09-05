@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -22,21 +23,27 @@ class Raytracer {
     private ConcurrentHashMap<Point, Color> pixelMap;
 
     private ConcurrentHashMap<SceneObject, Color> objectMap;
-    
+
+    private ArrayList<Light> lightList;
+
     Raytracer() {
         pixelMap = new ConcurrentHashMap<>();
         objectMap = new ConcurrentHashMap<>();
+        lightList = new ArrayList<>();
 
-        objectMap.put(new Sphere(100, new Point3d(0, 0, 1600)), Color.GREEN);
-        objectMap.put(new Sphere(500, new Point3d(100, 100, 4000)), Color.BLUE);
-        objectMap.put(new Sphere(50, new Point3d(-300, -300, 1600)), Color.RED);
+        int zPlane = 1000;
+        int distBetween = 200;
 
-        objectMap.put(
-                new Triangle(
-                        new Vector3d(-500, -100, 2000),
-                        new Vector3d(-400, -100, 2000),
-                        new Vector3d(-450, 100, 2100)
-                        ), Color.MAGENTA);
+        Sphere sun = new Sphere(50, new Point3d(0, 0, zPlane));
+        sun.setLitInternally(true);
+        objectMap.put(sun, Color.WHITE);
+
+        lightList.add(new Light(new Vector3d(0, 0, zPlane), 1));
+
+        objectMap.put(new Sphere(50, new Point3d(0, distBetween, zPlane)), Color.RED);
+        objectMap.put(new Sphere(50, new Point3d(0, -distBetween, zPlane)), Color.RED);
+        objectMap.put(new Sphere(50, new Point3d(distBetween, 0, zPlane)), Color.RED);
+        objectMap.put(new Sphere(50, new Point3d(-distBetween, 0, zPlane)), Color.RED);
     }
     
     void drawOnImage(BufferedImage image) {
@@ -66,12 +73,13 @@ class Raytracer {
     void calculatePixel(int x, int y) {
         Color c = Color.BLACK;
 
-        Vector3d lightDirection = new Vector3d(-1, -2,  0);
-        lightDirection.normalize();
-        double ambient = 0.2;
+        double ambient = 0.1;
 
         double bestIntersect = Double.MAX_VALUE;
-        double alignmentToLight = 0;
+        Vector3d intersectPoint = new Vector3d();
+        Vector3d normal = null;
+        boolean litInternally = false;
+
         for (Map.Entry<SceneObject, Color> entry : objectMap.entrySet()) {
             Vector3d ray = getRayAtPixel(x, y);
             double intersectDistance = entry.getKey().rayIntersect(ray);
@@ -80,20 +88,29 @@ class Raytracer {
                 bestIntersect = intersectDistance;
                 c = entry.getValue();
 
-                Vector3d intersectPoint = new Vector3d();
                 intersectPoint.scale(bestIntersect, ray);
-                Vector3d normal = entry.getKey().normalAtPoint(intersectPoint);
-                alignmentToLight = normal.dot(lightDirection);
-
+                normal = entry.getKey().normalAtPoint(intersectPoint);
+                litInternally = entry.getKey().isLitInternally();
             }
         }
-        alignmentToLight *= -1;
-        alignmentToLight = Math.max(alignmentToLight, 0); //Can't have negative light
 
-        alignmentToLight += ambient;
-        alignmentToLight = Math.min(alignmentToLight, 1);
+        double totalLight = 0;
+        if (litInternally) {
+            totalLight = 1;
+        } else {
+            if (normal != null) {
+                for (Light light : lightList) {
+                    double alignmentToLight = normal.dot(light.getRayTo(intersectPoint));
 
-        Color l = new Color((int)(c.getRed() * alignmentToLight), (int) (c.getGreen() * alignmentToLight), (int) (c.getBlue() * alignmentToLight));
+                    alignmentToLight *= -1;
+                    totalLight += Math.max(alignmentToLight, 0); //Can't have negative light;
+                }
+            }
+            totalLight += ambient;
+            totalLight = Math.min(totalLight, 1);
+        }
+
+        Color l = new Color((int)(c.getRed() * totalLight), (int) (c.getGreen() * totalLight), (int) (c.getBlue() * totalLight));
 
         pixelMap.put(new Point(x, y), l);
     }

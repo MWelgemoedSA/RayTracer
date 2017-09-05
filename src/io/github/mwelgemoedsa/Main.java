@@ -37,7 +37,7 @@ public class Main extends  JFrame {
 
     private Main() {
         raytracer = new Raytracer();
-        raytracer.loadFile("teapot.obj");
+        //raytracer.loadFile("teapot.obj");
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 

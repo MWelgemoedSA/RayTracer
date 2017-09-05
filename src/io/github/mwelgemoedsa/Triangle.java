@@ -75,6 +75,11 @@ public class Triangle implements SceneObject {
         return intersectDist;
     }
 
+    @Override
+    public boolean isLitInternally() {
+        return false;
+    }
+
     public Vector3d normalAtPoint(Vector3d point) {
         return normal;
     }

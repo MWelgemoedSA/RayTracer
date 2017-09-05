@@ -7,10 +7,13 @@ import java.util.Vector;
 public class Sphere implements SceneObject {
     private double radius;
     private Point3d center;
+    private boolean litInternally;
 
     public Sphere(double radius, Point3d center) {
         this.radius = radius;
         this.center = center;
+
+        this.litInternally = false;
     }
 
     public double rayIntersect(Vector3d l) { //Returns -1 for no intersection
@@ -29,10 +32,19 @@ public class Sphere implements SceneObject {
         return d1;
     }
 
+    @Override
+    public boolean isLitInternally() {
+        return litInternally;
+    }
+
     public Vector3d normalAtPoint(Vector3d point) {
         Vector3d normal = new Vector3d();
         normal.sub(point, center);
         normal.normalize();
         return normal;
+    }
+
+    public void setLitInternally(boolean litInternally) {
+        this.litInternally = litInternally;
     }
 }
