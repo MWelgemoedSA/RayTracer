@@ -37,7 +37,7 @@ public class Main extends  JFrame {
 
     private Main() {
         raytracer = new Raytracer();
-        raytracer.loadFile("Diamond.obj");
+        raytracer.loadFile("teapot.obj");
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -58,9 +58,7 @@ public class Main extends  JFrame {
     }
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            new Main();
-        });
+        EventQueue.invokeLater(Main::new);
     }
 
     private void redraw() {

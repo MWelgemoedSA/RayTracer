@@ -19,9 +19,9 @@ class Raytracer {
     private int ySize = 300;
     private int focalLength = 150;
 
-    ConcurrentHashMap<Point, Color> pixelMap;
+    private ConcurrentHashMap<Point, Color> pixelMap;
 
-    ConcurrentHashMap<SceneObject, Color> objectMap;
+    private ConcurrentHashMap<SceneObject, Color> objectMap;
     
     Raytracer() {
         pixelMap = new ConcurrentHashMap<>();
@@ -55,11 +55,11 @@ class Raytracer {
         g2d.drawRect(xSize/2, 0, 0, ySize);
     }
 
-    public int getXSize() {
+    int getXSize() {
         return xSize;
     }
 
-    public int getYSize() {
+    int getYSize() {
         return ySize;
     }
 
@@ -87,6 +87,7 @@ class Raytracer {
 
             }
         }
+        alignmentToLight *= -1;
         alignmentToLight = Math.max(alignmentToLight, 0); //Can't have negative light
 
         alignmentToLight += ambient;
@@ -97,11 +98,11 @@ class Raytracer {
         pixelMap.put(new Point(x, y), l);
     }
 
-    Vector3d getRayAtPixel(int x, int y) {
+    private Vector3d getRayAtPixel(int x, int y) {
         double fov = Math.toRadians(45);
 
         double px = ((double)x - xSize/2 + 0.5) * 2 * Math.atan(fov/2) / xSize;
-        double py = ((double)y - ySize/2 + 0.5) * 2 * Math.atan(fov/2) / ySize;
+        double py = (ySize/2 - (double)y + 0.5) * 2 * Math.atan(fov/2) / ySize;
 
         Vector3d ray = new Vector3d(px, py, 1);
         ray.normalize();
