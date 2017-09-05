@@ -146,7 +146,7 @@ class Raytracer {
         double fov = Math.toRadians(45);
 
         double px = ((double)x - xSize/2 + 0.5) * 2 * Math.atan(fov/2) / xSize;
-        double py = (ySize/2 - (double)y + 0.5) * 2 * Math.atan(fov/2) / ySize;
+        double py = (ySize/2 - (double)y - 0.5) * 2 * Math.atan(fov/2) / ySize;
 
         Vector3d ray = new Vector3d(px, py, 1);
         ray.normalize();
