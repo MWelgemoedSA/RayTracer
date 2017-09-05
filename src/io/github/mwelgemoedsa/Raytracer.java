@@ -31,7 +31,7 @@ class Raytracer {
         objectMap = new ConcurrentHashMap<>();
         lightList = new ArrayList<>();
 
-        int zPlane = 1000;
+        int zPlane = 2000;
         int distBetween = 200;
 
         Sphere sun = new Sphere(50, new Point3d(0, 0, zPlane));
@@ -40,10 +40,24 @@ class Raytracer {
 
         lightList.add(new Light(new Vector3d(0, 0, zPlane), 1));
 
-        objectMap.put(new Sphere(50, new Point3d(0, distBetween, zPlane)), Color.RED);
-        objectMap.put(new Sphere(50, new Point3d(0, -distBetween, zPlane)), Color.RED);
-        objectMap.put(new Sphere(50, new Point3d(distBetween, 0, zPlane)), Color.RED);
-        objectMap.put(new Sphere(50, new Point3d(-distBetween, 0, zPlane)), Color.RED);
+        int sphereSize = 50;
+        objectMap.put(new Sphere(sphereSize, new Point3d(0, distBetween, zPlane)), Color.RED);
+        objectMap.put(new Sphere(sphereSize, new Point3d(0, -distBetween, zPlane)), Color.RED);
+        objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, 0, zPlane)), Color.RED);
+        objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, 0, zPlane)), Color.RED);
+
+        sphereSize = 100;
+        distBetween = 500;
+
+        objectMap.put(new Sphere(sphereSize, new Point3d(0, distBetween, zPlane)), Color.GREEN);
+        objectMap.put(new Sphere(sphereSize, new Point3d(0, -distBetween, zPlane)), Color.GREEN);
+        objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, 0, zPlane)), Color.GREEN);
+        objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, 0, zPlane)), Color.GREEN);
+
+        objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, distBetween, zPlane)), Color.BLUE);
+        objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, -distBetween, zPlane)), Color.BLUE);
+        objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, distBetween, zPlane)), Color.BLUE);
+        objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, -distBetween, zPlane)), Color.BLUE);
     }
     
     void drawOnImage(BufferedImage image) {
