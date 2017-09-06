@@ -68,6 +68,7 @@ public class Main extends  JFrame {
 
     private void recalculateAllPixels() {
         for (int i = 0; i != raytracer.getXSize(); i++) {
+            System.out.println("Done with column " + i);
             for (int j = 0; j != raytracer.getYSize(); j++) {
                 raytracer.calculatePixel(i, j);
             }
