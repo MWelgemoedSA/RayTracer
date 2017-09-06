@@ -74,9 +74,12 @@ public class Main extends  JFrame {
             }
         }
 
+        BufferedImage out = new BufferedImage(raytracer.getXSize(), raytracer.getYSize(), BufferedImage.TYPE_INT_RGB);
+        raytracer.drawOnImage(out);
+
         File outputfile = new File("saved.png");
         try {
-            ImageIO.write(imageHolder.getImage(), "png", outputfile);
+            ImageIO.write(out, "png", outputfile);
         } catch (IOException e) {
             e.printStackTrace();
         }
