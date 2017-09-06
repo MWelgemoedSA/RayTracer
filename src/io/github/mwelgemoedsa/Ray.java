@@ -6,16 +6,24 @@ public class Ray {
     private Vector3d origin;
     private Vector3d direction;
 
-    public Ray(Vector3d origin, Vector3d direction) {
+    Ray(Vector3d origin, Vector3d direction) {
         this.origin = origin;
         this.direction = direction;
     }
 
-    public Vector3d getOrigin() {
+    @Override
+    public String toString() {
+        return "Ray{" +
+                "origin=" + origin +
+                ", direction=" + direction +
+                '}';
+    }
+
+    Vector3d getOrigin() {
         return origin;
     }
 
-    public Vector3d getDirection() {
+    Vector3d getDirection() {
         return direction;
     }
 }

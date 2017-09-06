@@ -46,8 +46,8 @@ public class Main extends  JFrame {
         add(imageHolder);
 
         setTitle("Maze drawer");
-        setSize(raytracer.getXSize(), raytracer.getYSize());
         setLocationRelativeTo(null);
+        pack();
         setVisible(true);
 
         Timer redrawTimer = new Timer(100, actionEvent -> redraw());
@@ -68,7 +68,7 @@ public class Main extends  JFrame {
 
     private void recalculateAllPixels() {
         for (int i = 0; i != raytracer.getXSize(); i++) {
-            for (int j = 0; j < raytracer.getYSize(); j++) {
+            for (int j = 0; j != raytracer.getYSize(); j++) {
                 raytracer.calculatePixel(i, j);
             }
         }
