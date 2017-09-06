@@ -39,7 +39,7 @@ class Raytracer {
         objectMap.put(sun, white);
 
         //lightList.add(new PointLight(new Vector3d(0, 0, zPlane), 1));
-        lightList.add(new CollimatedLight(new Vector3d(0, -1, 0)));
+        lightList.add(new CollimatedLight(new Vector3d(-1, -1, 1)));
 
         SurfaceHandler red = new SurfaceHandler(Color.RED);
 
@@ -96,41 +96,29 @@ class Raytracer {
 
         double ambient = 0.3;
 
-        double bestIntersect = Double.MAX_VALUE;
         Vector3d intersectPoint = new Vector3d();
-        Vector3d normal = null;
-        SurfaceHandler surfaceHandler = null;
 
-        for (Map.Entry<SceneObject, SurfaceHandler> entry : objectMap.entrySet()) {
-            Ray ray = getRayAtPixel(x, y);
-            double intersectDistance = entry.getKey().rayIntersect(ray);
-            if (intersectDistance < 0) continue;
-            if (intersectDistance < bestIntersect) {
-                bestIntersect = intersectDistance;
-
-                intersectPoint.scale(bestIntersect, ray.getDirection());
-                normal = entry.getKey().normalAtPoint(intersectPoint);
-                surfaceHandler = entry.getValue();
-            }
-        }
+        Ray ray = getRayAtPixel(x, y);
+        SceneObject intersectObject = getFirstIntersection(ray, intersectPoint);
 
         double totalLight = 0;
-        if (normal != null) {
-            for (Light light : lightList) {
+        if (intersectObject != null) { //We hit something, now calculate the light intensity
+            Vector3d objectNormal = intersectObject.normalAtPoint(intersectPoint);
+
+            for (Light light : lightList) { //Check each light to see if we are illuminated by it
                 Vector3d lightDir = light.getVectorFrom(intersectPoint);
-                bestIntersect = lightDir.length();
+                double bestIntersect = lightDir.length();
                 lightDir.normalize();
-                double alignmentToLight = normal.dot(lightDir);
+
+                double alignmentToLight = objectNormal.dot(lightDir);
 
                 //Check to see that the light is visible to us
                 for (Map.Entry<SceneObject, SurfaceHandler> entry : objectMap.entrySet()) {
                     if (entry.getKey().isLitInternally()) continue;
 
-                    Ray ray = new Ray(intersectPoint, lightDir);
-
-                    double intersectDistance = entry.getKey().rayIntersect(ray);
-                    if (intersectDistance < 0) continue;
-                    if (intersectDistance < bestIntersect) {
+                    Ray shadowRay = new Ray(intersectPoint, lightDir);
+                    //Check if there is something between us and this light
+                    if (getFirstIntersection(shadowRay, null) != null) {
                         alignmentToLight = 0;
                         break;
                     }
@@ -142,10 +130,36 @@ class Raytracer {
             totalLight = Math.min(totalLight, 1);
         }
 
-        if (surfaceHandler != null)
-            c = surfaceHandler.getColor(totalLight);
+        if (intersectObject != null) {
+            SurfaceHandler surfaceHandler = objectMap.get(intersectObject);
+            if (surfaceHandler != null)
+                c = surfaceHandler.getColor(totalLight);
+        }
 
         pixelMap.put(new Point(x, y), c);
+    }
+
+    //Gets the first intersection of an object along the ray, or null if there is none
+    //Also fills intersectionPoint with the xyz of the intersection
+    private SceneObject getFirstIntersection(Ray ray, Vector3d intersectionPoint) {
+        double bestIntersect = Double.MAX_VALUE;
+
+        SceneObject intersectObject = null;
+        for (Map.Entry<SceneObject, SurfaceHandler> entry : objectMap.entrySet()) {
+            SceneObject sceneObject = entry.getKey();
+            double intersectDistance = sceneObject.rayIntersect(ray);
+            if (intersectDistance < 0) continue;
+            if (intersectDistance < bestIntersect) {
+                bestIntersect = intersectDistance;
+
+                if (intersectionPoint != null)
+                    intersectionPoint.scale(bestIntersect, ray.getDirection());
+
+                intersectObject = sceneObject;
+            }
+        }
+
+        return intersectObject;
     }
 
     private Ray getRayAtPixel(int x, int y) {
