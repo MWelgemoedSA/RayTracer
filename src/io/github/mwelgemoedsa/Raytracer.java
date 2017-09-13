@@ -13,8 +13,8 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 class Raytracer {
-    private int xSize = 1000;
-    private int ySize = 1000;
+    private int xSize = 300;
+    private int ySize = 300;
     private int focalLength = 150;
 
     private ConcurrentHashMap<Point, Color> pixelMap;
@@ -23,10 +23,14 @@ class Raytracer {
 
     private ArrayList<Light> lightList;
 
+    private Color defaultColour;
+
     Raytracer() {
         pixelMap = new ConcurrentHashMap<>();
         objectMap = new ConcurrentHashMap<>();
         lightList = new ArrayList<>();
+
+        defaultColour = new Color(70,130,180);
 
         int zPlane = 2000;
         int distBetween = 200;
@@ -34,9 +38,6 @@ class Raytracer {
         Sphere sun = new Sphere(50, new Point3d(0, 0, zPlane));
         sun.setLitInternally(true);
 
-        SurfaceHandler white = new SurfaceHandler(Color.WHITE);
-        white.setInternallyLit(true);
-        objectMap.put(sun, white);
 
         //lightList.add(new PointLight(new Vector3d(0, 0, zPlane), 1));
         lightList.add(new CollimatedLight(new Vector3d(-1, -1, 1)));
@@ -45,7 +46,7 @@ class Raytracer {
 
         int sphereSize = 20;
         objectMap.put(new Sphere(sphereSize, new Point3d(0, distBetween, zPlane)), red);
-        objectMap.put(new Sphere(sphereSize, new Point3d(0, -distBetween, zPlane)), red);
+        //objectMap.put(new Sphere(sphereSize, new Point3d(0, -distBetween, zPlane)), red);
         objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, 0, zPlane)), red);
         objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, 0, zPlane)), red);
 
@@ -55,16 +56,24 @@ class Raytracer {
         SurfaceHandler green = new SurfaceHandler(Color.GREEN);
 
         objectMap.put(new Sphere(sphereSize, new Point3d(0, distBetween, zPlane)), green);
-        objectMap.put(new Sphere(sphereSize, new Point3d(0, -distBetween, zPlane)), green);
+        //objectMap.put(new Sphere(sphereSize, new Point3d(0, -distBetween, zPlane)), green);
         objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, 0, zPlane)), green);
         objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, 0, zPlane)), green);
 
         SurfaceHandler blue = new SurfaceHandler(Color.BLUE);
 
         objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, distBetween, zPlane)), blue);
-        objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, -distBetween, zPlane)), blue);
+        //objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, -distBetween, zPlane)), blue);
         objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, distBetween, zPlane)), blue);
-        objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, -distBetween, zPlane)), blue);
+        //objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, -distBetween, zPlane)), blue);
+
+        Triangle triangle = new Triangle(
+                new Vector3d(-distBetween, -distBetween, zPlane/2),
+                new Vector3d(-distBetween, 0, zPlane*2),
+                new Vector3d(-distBetween, distBetween, zPlane/2));
+        SurfaceHandler mirror = new SurfaceHandler(Color.cyan);
+        mirror.setReflective(true);
+        objectMap.put(triangle, mirror);
     }
     
     void drawOnImage(BufferedImage image) {
@@ -92,7 +101,7 @@ class Raytracer {
     }
 
     void calculatePixel(int x, int y) {
-        Color c = Color.BLACK;
+        Color c = defaultColour;
 
         double ambient = 0.3;
 
@@ -113,14 +122,21 @@ class Raytracer {
                 double alignmentToLight = objectNormal.dot(lightDir);
 
                 //Check to see that the light is visible to us
-                for (Map.Entry<SceneObject, SurfaceHandler> entry : objectMap.entrySet()) {
-                    if (entry.getKey().isLitInternally()) continue;
+                if (alignmentToLight > 0) {
+                    for (Map.Entry<SceneObject, SurfaceHandler> entry : objectMap.entrySet()) {
+                        if (entry.getKey().isLitInternally()) continue;
+                        if (entry.getKey() == intersectObject) continue;
 
-                    Ray shadowRay = new Ray(intersectPoint, lightDir);
-                    //Check if there is something between us and this light
-                    if (getFirstIntersection(shadowRay, null) != null) {
-                        alignmentToLight = 0;
-                        break;
+                        Ray shadowRay = new Ray(intersectPoint, lightDir);
+                        //Check if there is something between us and this light
+
+                        Vector3d intersectionPoint = new Vector3d();
+                        SceneObject lightBlockingObject = getFirstIntersection(shadowRay, intersectionPoint);
+                        if (lightBlockingObject != null) {
+                            lightBlockingObject.rayIntersect(shadowRay);
+                            alignmentToLight = 0;
+                            break;
+                        }
                     }
                 }
 
@@ -152,9 +168,10 @@ class Raytracer {
             if (intersectDistance < bestIntersect) {
                 bestIntersect = intersectDistance;
 
-                if (intersectionPoint != null)
+                if (intersectionPoint != null) {
                     intersectionPoint.scale(bestIntersect, ray.getDirection());
-
+                    intersectionPoint.add(ray.getOrigin());
+                }
                 intersectObject = sceneObject;
             }
         }

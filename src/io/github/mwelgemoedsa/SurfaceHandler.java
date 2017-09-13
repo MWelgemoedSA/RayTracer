@@ -7,6 +7,7 @@ import java.util.ArrayList;
 public class SurfaceHandler {
     private Color color;
     private boolean internallyLit;
+    private boolean isReflective;
 
     public SurfaceHandler(Color color) {
         this.color = color;
@@ -27,5 +28,13 @@ public class SurfaceHandler {
 
     public void setInternallyLit(boolean internallyLit) {
         this.internallyLit = internallyLit;
+    }
+
+    public boolean isReflective() {
+        return isReflective;
+    }
+
+    public void setReflective(boolean reflective) {
+        isReflective = reflective;
     }
 }

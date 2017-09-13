@@ -29,6 +29,7 @@ public class Triangle implements SceneObject {
 
         normal = new Vector3d();
         normal.cross(v1, v2);
+        normal.normalize();
 
         distanceFromOrigin = p1.dot(normal); //Distance of the plane from the origin
     }
@@ -46,7 +47,12 @@ public class Triangle implements SceneObject {
         double alignmentToRay = normal.dot(ray.getDirection());
         if (alignmentToRay == 0) return -1; //Parallel, triangles are infinitely thin, so no collision
 
-        double intersectDist = (normal.dot(ray.getOrigin()) + distanceFromOrigin) / alignmentToRay;
+        double distFromRayOrigin = normal.dot(ray.getOrigin());
+
+        if (distFromRayOrigin < 0)
+            return -1;
+
+        double intersectDist = (distFromRayOrigin + distanceFromOrigin) / alignmentToRay;
 
         if (intersectDist < 0) return intersectDist;
 
