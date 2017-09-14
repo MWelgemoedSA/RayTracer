@@ -47,10 +47,13 @@ public class Triangle implements SceneObject {
         double alignmentToRay = normal.dot(ray.getDirection());
         if (alignmentToRay == 0) return -1; //Parallel, triangles are infinitely thin, so no collision
 
-        double distFromRayOrigin = normal.dot(ray.getOrigin());
-
-        if (distFromRayOrigin < 0)
+        Vector3d fromOriginToPlane = new Vector3d();
+        fromOriginToPlane.sub(pointList.get(0), ray.getOrigin());
+        if (fromOriginToPlane.dot(ray.getDirection()) < 0) { //Behind the ray
             return -1;
+        }
+
+        double distFromRayOrigin = normal.dot(ray.getOrigin());
 
         double intersectDist = (distFromRayOrigin + distanceFromOrigin) / alignmentToRay;
 

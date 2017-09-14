@@ -68,9 +68,9 @@ class Raytracer {
         //objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, -distBetween, zPlane)), blue);
 
         Triangle triangle = new Triangle(
-                new Vector3d(-distBetween, -distBetween, zPlane/2),
-                new Vector3d(-distBetween, 0, zPlane*2),
-                new Vector3d(-distBetween, distBetween, zPlane/2));
+                new Vector3d(-distBetween*2, -distBetween, zPlane*1.5),
+                new Vector3d(distBetween*2,  -distBetween, zPlane*1.5),
+                new Vector3d(0,         -distBetween, zPlane/2));
         SurfaceHandler mirror = new SurfaceHandler(Color.cyan);
         mirror.setReflective(true);
         objectMap.put(triangle, mirror);
@@ -116,7 +116,6 @@ class Raytracer {
 
             for (Light light : lightList) { //Check each light to see if we are illuminated by it
                 Vector3d lightDir = light.getVectorFrom(intersectPoint);
-                double bestIntersect = lightDir.length();
                 lightDir.normalize();
 
                 double alignmentToLight = objectNormal.dot(lightDir);
@@ -133,7 +132,6 @@ class Raytracer {
                         Vector3d intersectionPoint = new Vector3d();
                         SceneObject lightBlockingObject = getFirstIntersection(shadowRay, intersectionPoint);
                         if (lightBlockingObject != null) {
-                            lightBlockingObject.rayIntersect(shadowRay);
                             alignmentToLight = 0;
                             break;
                         }
