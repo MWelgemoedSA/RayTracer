@@ -13,8 +13,8 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 class Raytracer {
-    private int xSize = 300;
-    private int ySize = 300;
+    private int xSize = 1000;
+    private int ySize = 1000;
     private int focalLength = 150;
 
     private ConcurrentHashMap<Point, Color> pixelMap;
@@ -40,7 +40,7 @@ class Raytracer {
 
 
         //lightList.add(new PointLight(new Vector3d(0, 0, zPlane), 1));
-        lightList.add(new CollimatedLight(new Vector3d(-1, -1, 1)));
+        lightList.add(new CollimatedLight(new Vector3d(-1, 0, 1)));
 
         SurfaceHandler red = new SurfaceHandler(Color.RED);
 
@@ -74,6 +74,8 @@ class Raytracer {
         SurfaceHandler mirror = new SurfaceHandler(Color.cyan);
         mirror.setReflective(true);
         objectMap.put(triangle, mirror);
+
+        objectMap.put(new Sphere(sphereSize*2, new Point3d(0, 0, zPlane*1.25)), mirror);
     }
     
     void drawOnImage(BufferedImage image) {
@@ -101,56 +103,80 @@ class Raytracer {
     }
 
     void calculatePixel(int x, int y) {
-        Color c = defaultColour;
+        Ray ray = getRayAtPixel(x, y);
+        Color c = getColorAtIntersection(ray, 3);
+        pixelMap.put(new Point(x, y), c);
+    }
 
-        double ambient = 0.3;
+    private Color getColorAtIntersection(Ray ray, int reflectionsAllowed) {
+        Color c = defaultColour;
 
         Vector3d intersectPoint = new Vector3d();
 
-        Ray ray = getRayAtPixel(x, y);
         SceneObject intersectObject = getFirstIntersection(ray, intersectPoint);
 
-        double totalLight = 0;
         if (intersectObject != null) { //We hit something, now calculate the light intensity
-            Vector3d objectNormal = intersectObject.normalAtPoint(intersectPoint);
+            SurfaceHandler surfaceHandler = objectMap.get(intersectObject);
+            if (surfaceHandler.isReflective() && reflectionsAllowed > 0) {
+                Ray reflectedRay = new Ray(intersectPoint, intersectObject.normalAtPoint(intersectPoint));
+                c = getColorAtIntersection(reflectedRay, reflectionsAllowed-1);
+                c = scaleColor(c, 0.8);
+            } else {
+                double totalLight = getLightAlignment(intersectObject, intersectPoint);
 
-            for (Light light : lightList) { //Check each light to see if we are illuminated by it
-                Vector3d lightDir = light.getVectorFrom(intersectPoint);
-                lightDir.normalize();
+                c = surfaceHandler.getColor(totalLight);
+            }
+        }
+        return c;
+    }
 
-                double alignmentToLight = objectNormal.dot(lightDir);
+    private Color scaleColor(Color c, double s) {
+        int R = (int) (c.getRed() * s);
+        int G = (int) (c.getGreen() * s);
+        int B = (int) (c.getBlue() * s);
 
-                //Check to see that the light is visible to us
-                if (alignmentToLight > 0) {
-                    for (Map.Entry<SceneObject, SurfaceHandler> entry : objectMap.entrySet()) {
-                        if (entry.getKey().isLitInternally()) continue;
-                        if (entry.getKey() == intersectObject) continue;
+        R = Math.min(R, 255);
+        G = Math.min(G, 255);
+        B = Math.min(B, 255);
 
-                        Ray shadowRay = new Ray(intersectPoint, lightDir);
-                        //Check if there is something between us and this light
+        return new Color(R, G, B);
+    }
 
-                        Vector3d intersectionPoint = new Vector3d();
-                        SceneObject lightBlockingObject = getFirstIntersection(shadowRay, intersectionPoint);
-                        if (lightBlockingObject != null) {
-                            alignmentToLight = 0;
-                            break;
-                        }
+    private double getLightAlignment(SceneObject intersectObject, Vector3d intersectPoint) {
+        double ambient = 0.3;
+
+        double totalLight = 0;
+        Vector3d objectNormal = intersectObject.normalAtPoint(intersectPoint);
+
+        for (Light light : lightList) { //Check each light to see if we are illuminated by it
+            Vector3d lightDir = light.getVectorFrom(intersectPoint);
+            lightDir.normalize();
+
+            double alignmentToLight = objectNormal.dot(lightDir);
+
+            //Check to see that the light is visible to us
+            if (alignmentToLight > 0) {
+                for (Map.Entry<SceneObject, SurfaceHandler> entry : objectMap.entrySet()) {
+                    if (entry.getKey().isLitInternally()) continue;
+                    if (entry.getKey() == intersectObject) continue;
+
+                    Ray shadowRay = new Ray(intersectPoint, lightDir);
+                    //Check if there is something between us and this light
+
+                    Vector3d intersectionPoint = new Vector3d();
+                    SceneObject lightBlockingObject = getFirstIntersection(shadowRay, intersectionPoint);
+                    if (lightBlockingObject != null) {
+                        alignmentToLight = 0;
+                        break;
                     }
                 }
-
-                totalLight += Math.max(alignmentToLight, 0); //Can't have negative light;
             }
-            totalLight += ambient;
-            totalLight = Math.min(totalLight, 1);
-        }
 
-        if (intersectObject != null) {
-            SurfaceHandler surfaceHandler = objectMap.get(intersectObject);
-            if (surfaceHandler != null)
-                c = surfaceHandler.getColor(totalLight);
+            totalLight += Math.max(alignmentToLight, 0); //Can't have negative light;
         }
-
-        pixelMap.put(new Point(x, y), c);
+        totalLight += ambient;
+        totalLight = Math.min(totalLight, 1);
+        return totalLight;
     }
 
     //Gets the first intersection of an object along the ray, or null if there is none
