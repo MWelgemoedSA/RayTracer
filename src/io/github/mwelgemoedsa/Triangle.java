@@ -1,16 +1,15 @@
 package io.github.mwelgemoedsa;
 
-import javax.vecmath.Point3d;
+import javax.vecmath.Vector2d;
 import javax.vecmath.Vector3d;
 import java.util.ArrayList;
-
-import static javax.swing.text.html.HTML.Attribute.N;
-import static javax.swing.text.html.HTML.Tag.P;
 
 public class Triangle implements SceneObject {
     private ArrayList<Vector3d> pointList;
     private Vector3d normal;
     private double distanceFromOrigin;
+
+    private ArrayList<Vector2d> vertexTextureCoordinates;
 
     Triangle(Vector3d p1, Vector3d p2, Vector3d p3) {
         pointList = new ArrayList<>();
@@ -32,6 +31,8 @@ public class Triangle implements SceneObject {
         normal.normalize();
 
         distanceFromOrigin = p1.dot(normal); //Distance of the plane from the origin
+
+        vertexTextureCoordinates = null;
     }
 
     @Override
@@ -87,7 +88,59 @@ public class Triangle implements SceneObject {
         return false;
     }
 
+    @Override
+    public Vector2d calculateTextureCoordinates(Vector3d pointOnSurface) { if (vertexTextureCoordinates == null) return null;
+
+        //Calculate the barycentry coordinates of the point on the surface and use it to interpolate between the texture coordinates of the corners
+        Vector3d toPoint1 = new Vector3d();
+        toPoint1.sub(pointList.get(0), pointOnSurface);
+
+        Vector3d toPoint2 = new Vector3d();
+        toPoint2.sub(pointList.get(1), pointOnSurface);
+
+        Vector3d toPoint3 = new Vector3d();
+        toPoint3.sub(pointList.get(2), pointOnSurface);
+
+        Vector3d v1 = new Vector3d();
+        v1.sub(pointList.get(0), pointList.get(1));
+        Vector3d v2 = new Vector3d();
+        v2.sub(pointList.get(1), pointList.get(2));
+
+        Vector3d areaVector = v1;
+        areaVector.cross(v1, v2);
+        double triangleArea = areaVector.length();
+
+        areaVector.cross(toPoint2, toPoint3);
+        double a1 = areaVector.length() / triangleArea;
+
+        areaVector.cross(toPoint3, toPoint1);
+        double a2 = areaVector.length() / triangleArea;
+
+        areaVector.cross(toPoint1, toPoint2);
+        double a3 = areaVector.length() / triangleArea;
+
+        Vector2d textureCoordsSum = new Vector2d();
+
+        Vector2d textureCoords1 = new Vector2d();
+        textureCoords1.scale(a1, vertexTextureCoordinates.get(0));
+
+        Vector2d textureCoords2 = new Vector2d();
+        textureCoords2.scale(a2, vertexTextureCoordinates.get(1));
+
+        Vector2d textureCoords3 = new Vector2d();
+        textureCoords3.scale(a3, vertexTextureCoordinates.get(2));
+
+        textureCoordsSum.add(textureCoords1);
+        textureCoordsSum.add(textureCoords2);
+        textureCoordsSum.add(textureCoords3);
+        return textureCoordsSum;
+    }
+
     public Vector3d normalAtPoint(Vector3d point) {
         return normal;
+    }
+
+    public void setVertexTextureCoordinates(ArrayList<Vector2d> vertexTextureCoordinates) {
+        this.vertexTextureCoordinates = vertexTextureCoordinates;
     }
 }

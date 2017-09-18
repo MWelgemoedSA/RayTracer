@@ -1,6 +1,7 @@
 package io.github.mwelgemoedsa;
 
 import javax.vecmath.Point3d;
+import javax.vecmath.Vector2d;
 import javax.vecmath.Vector3d;
 import java.util.Vector;
 
@@ -34,6 +35,17 @@ public class Sphere implements SceneObject {
     @Override
     public boolean isLitInternally() {
         return litInternally;
+    }
+
+    @Override
+    public Vector2d calculateTextureCoordinates(Vector3d pointOnSurface) {
+        Vector3d fromCenter = new Vector3d();
+        fromCenter.sub(pointOnSurface, center);
+        fromCenter.normalize(); //We calculate with a unit sphere
+
+        double u = 0.5 + Math.atan2(fromCenter.z, fromCenter.x) / (2 * Math.PI);
+        double v = 0.5 - Math.asin(fromCenter.y) / Math.PI;
+        return new Vector2d(u, v);
     }
 
     public Vector3d normalAtPoint(Vector3d point) {
