@@ -87,11 +87,6 @@ public class Triangle implements SceneObject {
     }
 
     @Override
-    public boolean isLitInternally() {
-        return false;
-    }
-
-    @Override
     public Vector2d calculateTextureCoordinates(Vector3d pointOnSurface) { if (vertexTextureCoordinates == null) return null;
 
         //Calculate the barycentry coordinates of the point on the surface and use it to interpolate between the texture coordinates of the corners

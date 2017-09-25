@@ -7,7 +7,6 @@ public interface SceneObject {
     Vector3d normalAtPoint(Vector3d point);
     double rayIntersect(Ray ray);
 ;
-    boolean isLitInternally();
 
     Vector2d calculateTextureCoordinates(Vector3d pointOnSurface);
 }

@@ -8,13 +8,10 @@ import java.util.Vector;
 public class Sphere implements SceneObject {
     private double radius;
     private Vector3d center;
-    private boolean litInternally;
 
     public Sphere(double radius, Vector3d center) {
         this.radius = radius;
         this.center = center;
-
-        this.litInternally = false;
     }
 
     public double rayIntersect(Ray ray) { //Returns -1 for no intersection
@@ -33,11 +30,6 @@ public class Sphere implements SceneObject {
     }
 
     @Override
-    public boolean isLitInternally() {
-        return litInternally;
-    }
-
-    @Override
     public Vector2d calculateTextureCoordinates(Vector3d pointOnSurface) {
         Vector3d fromCenter = new Vector3d();
         fromCenter.sub(pointOnSurface, center);
@@ -53,9 +45,5 @@ public class Sphere implements SceneObject {
         normal.sub(point, center);
         normal.normalize();
         return normal;
-    }
-
-    public void setLitInternally(boolean litInternally) {
-        this.litInternally = litInternally;
     }
 }

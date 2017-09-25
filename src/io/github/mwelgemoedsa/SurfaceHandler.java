@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 public class SurfaceHandler {
     private Color color;
+
     private boolean internallyLit;
     private boolean isReflective;
     private BufferedImage texture;
@@ -42,11 +43,28 @@ public class SurfaceHandler {
         y %= texture.getHeight();
 
         //System.out.println(textureCoords + " " + x + "  " + y  + " " + texture.getHeight() + " " + texture.getWidth());
-        return new Color(texture.getRGB(x, y));
+        Color c = new Color(texture.getRGB(x, y));
+        return scaleColor(c, illumination);
+    }
+
+    static Color scaleColor(Color c, double s) {
+        int R = (int) (c.getRed() * s);
+        int G = (int) (c.getGreen() * s);
+        int B = (int) (c.getBlue() * s);
+
+        R = Math.min(R, 255);
+        G = Math.min(G, 255);
+        B = Math.min(B, 255);
+
+        return new Color(R, G, B);
     }
 
     public void setInternallyLit(boolean internallyLit) {
         this.internallyLit = internallyLit;
+    }
+
+    public boolean isInternallyLit() {
+        return internallyLit;
     }
 
     public boolean isReflective() {

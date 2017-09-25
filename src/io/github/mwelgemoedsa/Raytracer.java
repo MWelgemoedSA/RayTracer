@@ -36,9 +36,6 @@ class Raytracer {
         int zPlane = 2000;
         int distBetween = 200;
 
-        Sphere sun = new Sphere(50, new Vector3d(0, 0, zPlane));
-        sun.setLitInternally(true);
-
         //lightList.add(new PointLight(new Vector3d(0, 0, zPlane), 1));
         lightList.add(new CollimatedLight(new Vector3d(0, -1, 1)));
 
@@ -85,6 +82,7 @@ class Raytracer {
         wood.loadImage("Wood.jpg");
         SurfaceHandler stars = new SurfaceHandler(Color.BLUE);
         stars.loadImage("Stars.jpg");
+        stars.setInternallyLit(true);
 
         int yplane = -distBetween;
         Vector3d Corner1 = new Vector3d(-distBetween*2, yplane, zPlane * 2);
@@ -198,7 +196,7 @@ class Raytracer {
             if (surfaceHandler.isReflective() && reflectionsAllowed > 0) {
                 Ray reflectedRay = new Ray(intersectPoint, intersectObject.normalAtPoint(intersectPoint));
                 c = getColorAtIntersection(reflectedRay, reflectionsAllowed-1);
-                c = scaleColor(c, 0.8);
+                c = SurfaceHandler.scaleColor(c, 0.8);
             } else {
                 double totalLight = getLightAlignment(intersectObject, intersectPoint);
 
@@ -209,19 +207,9 @@ class Raytracer {
         return c;
     }
 
-    private Color scaleColor(Color c, double s) {
-        int R = (int) (c.getRed() * s);
-        int G = (int) (c.getGreen() * s);
-        int B = (int) (c.getBlue() * s);
-
-        R = Math.min(R, 255);
-        G = Math.min(G, 255);
-        B = Math.min(B, 255);
-
-        return new Color(R, G, B);
-    }
-
     private double getLightAlignment(SceneObject intersectObject, Vector3d intersectPoint) {
+        if (objectMap.get(intersectObject).isInternallyLit()) return 1;
+
         double ambient = 0.3;
 
         double totalLight = 0;
@@ -236,7 +224,6 @@ class Raytracer {
             //Check to see that the light is visible to us
             if (alignmentToLight > 0) {
                 for (Map.Entry<SceneObject, SurfaceHandler> entry : objectMap.entrySet()) {
-                    if (entry.getKey().isLitInternally()) continue;
                     if (entry.getKey() == intersectObject) continue;
 
                     Ray shadowRay = new Ray(intersectPoint, lightDir);
@@ -245,6 +232,9 @@ class Raytracer {
                     Vector3d intersectionPoint = new Vector3d();
                     SceneObject lightBlockingObject = getFirstIntersection(shadowRay, intersectionPoint);
                     if (lightBlockingObject != null) {
+                        SurfaceHandler surface = objectMap.get(lightBlockingObject);
+                        if (surface.isInternallyLit()) continue;
+
                         alignmentToLight = 0;
                         break;
                     }
