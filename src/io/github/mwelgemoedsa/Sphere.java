@@ -7,10 +7,10 @@ import java.util.Vector;
 
 public class Sphere implements SceneObject {
     private double radius;
-    private Point3d center;
+    private Vector3d center;
     private boolean litInternally;
 
-    public Sphere(double radius, Point3d center) {
+    public Sphere(double radius, Vector3d center) {
         this.radius = radius;
         this.center = center;
 

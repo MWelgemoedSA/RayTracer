@@ -45,16 +45,19 @@ public class Triangle implements SceneObject {
     }
 
     public double rayIntersect(Ray ray) {
+        Vector3d bestNormal = new Vector3d();
+
         double alignmentToRay = normal.dot(ray.getDirection());
         if (alignmentToRay == 0) return -1; //Parallel, triangles are infinitely thin, so no collision
 
-        Vector3d fromOriginToPlane = new Vector3d();
-        fromOriginToPlane.sub(pointList.get(0), ray.getOrigin());
-        if (fromOriginToPlane.dot(ray.getDirection()) < 0) { //Behind the ray
-            return -1;
+        if (alignmentToRay < 0)
+            bestNormal.scale(1, normal);
+        else {
+            bestNormal.scale(-1, normal);
+            alignmentToRay *= -1;
         }
 
-        double distFromRayOrigin = normal.dot(ray.getOrigin());
+        double distFromRayOrigin = bestNormal.dot(ray.getOrigin());
 
         double intersectDist = (distFromRayOrigin + distanceFromOrigin) / alignmentToRay;
 
@@ -77,7 +80,7 @@ public class Triangle implements SceneObject {
             Vector3d vectorOutOfTriangle = new Vector3d();
 
             vectorOutOfTriangle.cross(edge, toPoint);
-            if (normal.dot(vectorOutOfTriangle) <= 0) return -1; //Outside the triangle
+            if (bestNormal.dot(vectorOutOfTriangle) <= 0) return -1; //Outside the triangle
         }
 
         return intersectDist;

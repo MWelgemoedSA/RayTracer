@@ -14,8 +14,8 @@ import javax.vecmath.Vector2d;
 import javax.vecmath.Vector3d;
 
 class Raytracer {
-    private int xSize = 300;
-    private int ySize = 300;
+    private int xSize = 600;
+    private int ySize = 600;
     private int focalLength = 150;
 
     private ConcurrentHashMap<Point, Color> pixelMap;
@@ -33,44 +33,126 @@ class Raytracer {
 
         defaultColour = new Color(70,130,180);
 
-        lightList.add(new CollimatedLight(new Vector3d(-1, 0, 1)));
+        int zPlane = 2000;
+        int distBetween = 200;
 
-        int zPlane = 500;
+        Sphere sun = new Sphere(50, new Vector3d(0, 0, zPlane));
+        sun.setLitInternally(true);
 
-        int sphereSize = 100;
-        int distBetween = 500;
+        //lightList.add(new PointLight(new Vector3d(0, 0, zPlane), 1));
+        lightList.add(new CollimatedLight(new Vector3d(0, -1, 1)));
 
-        SurfaceHandler wood = new SurfaceHandler(Color.GREEN);
+        SurfaceHandler red = new SurfaceHandler(Color.RED);
+
+        int sphereSize = 20;
+        objectMap.put(new Sphere(sphereSize, new Vector3d(0, distBetween, zPlane)), red);
+        //objectMap.put(new Sphere(sphereSize, new Point3d(0, -distBetween, zPlane)), red);
+        objectMap.put(new Sphere(sphereSize, new Vector3d(distBetween, 0, zPlane)), red);
+        objectMap.put(new Sphere(sphereSize, new Vector3d(-distBetween, 0, zPlane)), red);
+
+        sphereSize = 100;
+        distBetween = 500;
+
+        SurfaceHandler green = new SurfaceHandler(Color.GREEN);
+
+        objectMap.put(new Sphere(sphereSize, new Vector3d(0, distBetween, zPlane)), green);
+        //objectMap.put(new Sphere(sphereSize, new Point3d(0, -distBetween, zPlane)), green);
+        objectMap.put(new Sphere(sphereSize, new Vector3d(distBetween, 0, zPlane)), green);
+        objectMap.put(new Sphere(sphereSize, new Vector3d(-distBetween, 0, zPlane)), green);
+
+        SurfaceHandler blue = new SurfaceHandler(Color.BLUE);
+
+        objectMap.put(new Sphere(sphereSize, new Vector3d(distBetween, distBetween, zPlane)), blue);
+        //objectMap.put(new Sphere(sphereSize, new Point3d(distBetween, -distBetween, zPlane)), blue);
+        objectMap.put(new Sphere(sphereSize, new Vector3d(-distBetween, distBetween, zPlane)), blue);
+        //objectMap.put(new Sphere(sphereSize, new Point3d(-distBetween, -distBetween, zPlane)), blue);
+
+        SurfaceHandler mirror = new SurfaceHandler(Color.cyan);
+        mirror.setReflective(true);
+
+        objectMap.put(new Sphere(sphereSize*2, new Vector3d(0, 0, zPlane*1.25)), mirror);
+
+        sphereSize *= 4;
+        Triangle triangle = new Triangle(
+                new Vector3d(-sphereSize, -distBetween+1, zPlane*1.25+sphereSize),
+                new Vector3d(sphereSize,  -distBetween+1, zPlane*1.25+sphereSize),
+                new Vector3d(0,         -distBetween+1, zPlane*1.25-sphereSize));
+        objectMap.put(triangle, mirror);
+
+
+
+        SurfaceHandler wood = new SurfaceHandler(Color.PINK);
         wood.loadImage("Wood.jpg");
+        SurfaceHandler stars = new SurfaceHandler(Color.BLUE);
+        stars.loadImage("Stars.jpg");
+
+        int yplane = -distBetween;
+        Vector3d Corner1 = new Vector3d(-distBetween*2, yplane, zPlane * 2);
+        Vector3d Corner2 = new Vector3d(distBetween*2, yplane, zPlane * 2);
+        Vector3d Corner3 = new Vector3d(-distBetween*2, yplane, zPlane * 0.75);
+        addSquare(Corner1, Corner2, Corner3, wood);
+
+        yplane = distBetween*2;
+        Vector3d Corner5 = new Vector3d(-distBetween*5, yplane, zPlane * 2);
+        Vector3d Corner6 = new Vector3d(distBetween*5, yplane, zPlane * 2);
+        Vector3d Corner7 = new Vector3d(-distBetween*5, yplane, zPlane * 0.75);
+        addSquare(Corner5, Corner7, Corner6, stars);
+
+        Vector3d Midpoint = new Vector3d();
+        Midpoint.sub(Corner2, Corner3);
+        Midpoint.scale(0.5);
+        Midpoint.add(Corner3);
+        System.out.println(Midpoint);
+        Midpoint.y += 100;
+        Midpoint.z -= 100;
+
+        //objectMap.put(new Sphere(sphereSize*2, new Vector3d(0, yplane, zPlane*0.5)), green);
+    }
+
+
+    void addSquare(Vector3d Point1, Vector3d Point2, Vector3d Point3, SurfaceHandler surface) {
+        Vector3d v1 = new Vector3d();
+        v1.sub(Point2, Point1);
+
+        Vector3d v2 = new Vector3d();
+        v2.sub(Point3, Point1);
+
+        Vector3d Point4 = new Vector3d();
+        Point4.add(Point1, v1);
+        Point4.add(v2);
+
+        System.out.println(v1 + " " + v2 + " " + Point4);
 
         //objectMap.put(new Sphere(sphereSize, new Point3d(0, 0, zPlane)), wood);
         Triangle triangle = new Triangle(
-                new Vector3d(100, -100, zPlane),
-                new Vector3d(-100, -100, zPlane),
-                new Vector3d(100, 100, zPlane)
+                Point1,
+                Point2,
+                Point3
         );
+        System.out.println(Point1 + " " + Point2 + " " + Point3);
 
         ArrayList<Vector2d> textureCoordinates = new ArrayList<>();
-        textureCoordinates.add(new Vector2d(1, 0));
         textureCoordinates.add(new Vector2d(0, 0));
-        textureCoordinates.add(new Vector2d(1, 1));
+        textureCoordinates.add(new Vector2d(1, 0));
+        textureCoordinates.add(new Vector2d(0, 1));
         triangle.setVertexTextureCoordinates(textureCoordinates);
 
         Triangle triangle2 = new Triangle(
-                new Vector3d(-100, -100, zPlane),
-                new Vector3d(-100, 100, zPlane),
-                new Vector3d(100, 100, zPlane)
+                Point3,
+                Point2,
+                Point4
         );
+        System.out.println(Point2 + " " + Point3 + " " + Point4);
 
         ArrayList<Vector2d> textureCoordinates2 = new ArrayList<>();
-        textureCoordinates2.add(new Vector2d(0, 0));
         textureCoordinates2.add(new Vector2d(0, 1));
+        textureCoordinates2.add(new Vector2d(1, 0));
         textureCoordinates2.add(new Vector2d(1, 1));
         triangle2.setVertexTextureCoordinates(textureCoordinates2);
-        SurfaceHandler green = new SurfaceHandler(Color.GREEN);
 
-        objectMap.put(triangle, wood);
-        objectMap.put(triangle2, wood);
+        objectMap.put(triangle, surface);
+        objectMap.put(triangle2, surface);
+
     }
     
     void drawOnImage(BufferedImage image) {
@@ -123,6 +205,7 @@ class Raytracer {
                 c = surfaceHandler.getColor(intersectObject, intersectPoint, totalLight);
             }
         }
+
         return c;
     }
 

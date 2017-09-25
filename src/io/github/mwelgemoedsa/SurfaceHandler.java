@@ -38,7 +38,10 @@ public class SurfaceHandler {
         int x = (int) (texture.getWidth() * textureCoords.x);
         int y = (int) (texture.getHeight() * textureCoords.y);
 
-        System.out.println(textureCoords + " " + x + "  " + y);
+        x %= texture.getWidth();
+        y %= texture.getHeight();
+
+        //System.out.println(textureCoords + " " + x + "  " + y  + " " + texture.getHeight() + " " + texture.getWidth());
         return new Color(texture.getRGB(x, y));
     }
 
